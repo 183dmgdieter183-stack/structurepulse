@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StructurePulse — Structural Intelligence</title>
+  <meta name="description"
+    content="StructurePulse web dashboard: scan, analyse, and plan software architecture with 69 gold-standard blueprints." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #0a0b12;
+      --bg-surface: #111220;
+      --bg-elevated: #181928;
+      --bg-hover: #1f2135;
+      --accent-primary: #6c8fff;
+      --accent-glow: #6c8fff33;
+      --accent-green: #4ade80;
+      --accent-gold: #fbbf24;
+      --accent-red: #f87171;
+      --accent-purple: #a78bfa;
+      --text-primary: #e8eaf6;
+      --text-secondary: #8890b0;
+      --text-dim: #4a5080;
+      --border: #1e2240;
+      --border-accent: #6c8fff40;
+      --border-glow: #6c8fff80;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+      --shadow-glow: 0 0 40px rgba(108, 143, 255, 0.15);
+      --font-ui: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --sidebar-width: 220px;
+      --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 15px;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #app {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      height: 100vh;
+    }
+
+    .sidebar {
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 22px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #6c8fff, #a78bfa);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(108, 143, 255, 0.4);
+    }
+
+    .logo-text {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--accent-glow);
+      color: var(--accent-primary);
+      border-color: var(--border-accent);
+    }
+
+    .nav-icon {
+      font-size: 15px;
+      width: 18px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 16px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .quality-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(74, 222, 128, 0.08);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      border-radius: var(--radius-sm);
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    .badge-text {
+      font-size: 11.5px;
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.5
+      }
+    }
+
+    .main-content {
+      overflow-y: auto;
+      padding: 32px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .page-header {
+      margin-bottom: 28px;
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+    }
+
+    .page-subtitle {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: all var(--transition);
+    }
+
+    .metric-card:hover {
+      border-color: var(--border-accent);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 32px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      line-height: 1;
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-stable {
+      background: rgba(74, 222, 128, 0.12);
+      color: var(--accent-green);
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    .status-warning {
+      background: rgba(251, 191, 36, 0.12);
+      color: var(--accent-gold);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .status-critical,
+    .status-rigid {
+      background: rgba(248, 113, 113, 0.12);
+      color: var(--accent-red);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+
+    .fd-bar-wrap {
+      margin-top: 8px;
+    }
+
+    .fd-bar-track {
+      height: 8px;
+      background: var(--bg-elevated);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .fd-bar-optimal {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 70%;
+      width: 20%;
+      background: rgba(74, 222, 128, 0.15);
+    }
+
+    .fd-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-purple), var(--accent-primary));
+      border-radius: 4px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .fd-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px 10px 38px;
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: 13.5px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .search-input:focus {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    .path-input-wrap {
+      display: flex;
+      gap: 10px;
+    }
+
+    .path-input {
+      flex: 1;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .path-input:focus {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6c8fff, #a78bfa);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(108, 143, 255, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(108, 143, 255, 0.5);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 14px;
+    }
+
+    .module-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .module-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .module-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .module-name {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .module-shi {
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-green);
+      white-space: nowrap;
+      background: rgba(74, 222, 128, 0.1);
+      padding: 2px 8px;
+      border-radius: 100px;
+    }
+
+    .module-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .module-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: var(--bg-elevated);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    .problem-input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: 14px;
+      resize: vertical;
+      min-height: 100px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .problem-input:focus {
+      border-color: var(--border-glow);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .code-block {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .pattern-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: all var(--transition);
+    }
+
+    .pattern-card:hover {
+      border-color: var(--border-accent);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .invariant-list {
+      list-style: none;
+      margin: 12px 0;
+    }
+
+    .invariant-list li {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      padding: 4px 0 4px 16px;
+      position: relative;
+    }
+
+    .invariant-list li::before {
+      content: '·';
+      position: absolute;
+      left: 0;
+      color: var(--accent-primary);
+    }
+
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 48px;
+      color: var(--text-secondary);
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      font-size: 13px;
+      box-shadow: var(--shadow-card);
+      animation: slide-in 0.2s ease;
+    }
+
+    @keyframes slide-in {
+      from {
+        transform: translateX(100%);
+        opacity: 0
+      }
+
+      to {
+        transform: none;
+        opacity: 1
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-secondary);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+
+    @media(max-width:900px) {
+      .grid-4 {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    @media(max-width:600px) {
+      #app {
+        grid-template-columns: 1fr
+      }
+
+      .sidebar {
+        display: none
+      }
+
+      .main-content {
+        padding: 20px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">SP</div>
+        <span class="logo-text">StructurePulse</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-view="dashboard"><span class="nav-icon">◈</span><span>Dashboard</span></a>
+        <a class="nav-item" data-view="library"><span class="nav-icon">⬡</span><span>Library</span></a>
+        <a class="nav-item" data-view="planner"><span class="nav-icon">✦</span><span>Planner</span></a>
+        <a class="nav-item" data-view="patterns"><span class="nav-icon">◉</span><span>Patterns</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="quality-badge">
+          <span class="badge-dot"></span>
+          <span class="badge-text" id="lib-badge">Elite Blueprints</span>
+        </div>
+      </div>
+    </aside>
+    <main class="main-content" id="view-container"></main>
+  </div>
+  <div id="toast-container"></div>
+
+  <script>
+    const API = '';
+    const DEFAULT_SCAN_PATH = '/Users/annabellabohn/Desktop/sstructurepulse/code/structurepulse';
+    const EXAMPLES = [
+      'A FastAPI SaaS backend with Stripe payments and JWT auth',
+      'A RAG chatbot with LangChain and FAISS vector store',
+      'A gRPC microservice for data ingestion',
+      'An async Celery task queue with Redis',
+      'An AWS S3 backup manager CLI tool',
+    ];
+
+    // ── API helpers ────────────────────────────────────────────────────────
+    async function api(method, path, body) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(API + path, opts);
+      if (!res.ok) throw new Error(`${method} ${path} → ${res.status}`);
+      return res.json();
+    }
+
+    // ── Toast ──────────────────────────────────────────────────────────────
+    function toast(msg, type = 'ok') {
+      const el = document.createElement('div');
+      el.className = 'toast';
+      const c = type === 'ok' ? '#4ade80' : type === 'warn' ? '#fbbf24' : '#f87171';
+      el.style.borderLeft = `3px solid ${c}`;
+      el.textContent = msg;
+      document.getElementById('toast-container').appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    // ── SHI Gauge ──────────────────────────────────────────────────────────
+    function shiGauge(shi, status) {
+      const r = 60, cx = 80, cy = 80;
+      const sa = -Math.PI * 0.8, ea = Math.PI * 0.8;
+      const fa = sa + (ea - sa) * Math.min(Math.max(shi, 0), 1);
+      const color = status === 'stable' ? '#4ade80' : status === 'warning' ? '#fbbf24' : '#f87171';
+      function pt(a) { return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}` }
+      const large = fa - sa > Math.PI ? 1 : 0;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+    <svg width="160" height="130" viewBox="0 0 160 120">
+      <path d="M ${pt(sa)} A ${r} ${r} 0 1 1 ${pt(ea)}" fill="none" stroke="#1e2240" stroke-width="10" stroke-linecap="round"/>
+      <path d="M ${pt(sa)} A ${r} ${r} 0 ${large} 1 ${pt(fa)}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" style="filter:drop-shadow(0 0 8px ${color}88)"/>
+      <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-size="22" font-weight="700" font-family="JetBrains Mono,monospace" fill="${color}">${shi.toFixed(3)}</text>
+      <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="11" fill="#8890b0">${status.toUpperCase()}</text>
+    </svg>
+    <div style="font-size:12px;color:var(--text-secondary)">Structural Health Index</div>
+  </div>`;
+    }
+
+    // ── FD Bar ─────────────────────────────────────────────────────────────
+    function fdBar(fd) {
+      const pct = Math.min(Math.max((fd - 1.0) * 100, 0), 100);
+      const ok = fd >= 1.7 && fd <= 1.9;
+      return `<div class="fd-bar-wrap">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-size:13px;color:var(--text-secondary)">Fractal Dimension</span>
+      <span style="font-size:13px;font-weight:600;font-family:var(--font-mono);color:${ok ? 'var(--accent-green)' : 'var(--accent-gold)'}">${fd.toFixed(4)}</span>
+    </div>
+    <div class="fd-bar-track">
+      <div class="fd-bar-optimal"></div>
+      <div class="fd-bar-fill" style="width:${pct}%"></div>
+    </div>
+    <div class="fd-bar-labels"><span>1.0 rigid</span><span style="color:var(--accent-green)">optimal [1.7–1.9]</span><span>chaos 2.0</span></div>
+  </div>`;
+    }
+
+    // ── Views ──────────────────────────────────────────────────────────────
+    function renderDashboard(el) {
+      el.innerHTML = `
+    <div class="page-header">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Scan any directory for structural health metrics</p>
+    </div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">Target Path</div>
+      <div class="path-input-wrap">
+        <input id="scan-path" class="path-input" value="${DEFAULT_SCAN_PATH}" placeholder="/path/to/project" />
+        <button id="browse-btn" class="btn btn-ghost">📁 Browse</button>
+        <button id="scan-btn" class="btn btn-primary">⬡ Scan</button>
+      </div>
+    </div>
+    <div id="scan-res"></div>`;
+
+      el.querySelector('#scan-btn').addEventListener('click', () => {
+        runScan(el.querySelector('#scan-path').value.trim(), el.querySelector('#scan-res'));
+      });
+      el.querySelector('#browse-btn').addEventListener('click', async () => {
+        try {
+          const res = await fetch(API + '/api/scan/browse');
+          const data = await res.json();
+          if (data.path) {
+            el.querySelector('#scan-path').value = data.path;
+            runScan(data.path, el.querySelector('#scan-res'));
+          }
+        } catch (e) { toast('Could not open folder picker', 'err'); }
+      });
+      runScan(DEFAULT_SCAN_PATH, el.querySelector('#scan-res'));
+    }
+
+    async function runScan(path, res) {
+      if (!path) return;
+      res.innerHTML = `<div class="loading"><div class="spinner"></div><span>Scanning...</span></div>`;
+      try {
+        const d = await api('POST', '/api/scan', { path });
+        const m = d.metrics; const fp = d.fingerprint || {};
+        const sc = m.status;
+        const scCls = sc === 'stable' ? 'status-stable' : sc === 'warning' ? 'status-warning' : 'status-critical';
+        res.innerHTML = `
+      <div class="grid-4" style="margin-bottom:20px;">
+        ${mc('SHI Score', m.shi?.toFixed(3), `<span class="status-badge ${scCls}">${sc}</span>`, 'var(--accent-green)')}
+        ${mc('Fractal Dim', m.fd?.toFixed(4), `<span style="color:var(--text-secondary);font-size:12px">${m.fd_status || ''}</span>`, 'var(--accent-primary)')}
+        ${mc('Dep. Cycles', m.cycle_count ?? 0, m.cycle_count === 0 ? '<span class="status-badge status-stable">Clean</span>' : '<span class="status-badge status-critical">Has Cycles</span>', 'var(--accent-purple)')}
+        ${mc('Coupling', (m.coupling_density ?? 0).toFixed(3), `<span style="color:var(--text-secondary);font-size:12px">${fp.modules || '?'} modules</span>`, 'var(--accent-gold)')}
+      </div>
+
+      ${d.inconsistencies?.length ? `
+      <div class="card" style="margin-bottom:20px; border-color:var(--accent-gold);">
+        <div class="card-title" style="color:var(--accent-gold)">[!] Role Inconsistencies</div>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          ${d.inconsistencies.map(w => `
+            <div style="padding:10px; background:rgba(251,191,36,0.05); border-radius:var(--radius-sm); border:1px solid rgba(251,191,36,0.2)">
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span style="font-weight:600; font-size:13px; color:var(--accent-gold)">${w.kind}</span>
+                <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary)">${w.module_path.split('/').pop()}</span>
+              </div>
+              <div style="font-size:12px; color:var(--text-primary); margin-bottom:4px;">${w.message}</div>
+              <div style="font-size:11px; color:var(--text-dim); font-style:italic;">${w.detail}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : ''}
+
+      ${d.dependency_cycles?.length ? `
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Dependency Cycles</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${d.dependency_cycles.map(cycle => {
+          const parts = cycle.map((mod, i) => {
+            const nextMod = cycle[(i + 1) % cycle.length];
+            const line = d.import_lines[`${mod}->${nextMod}`];
+            const name = mod.split('/').pop();
+            return line ? `${name}<span style="color:var(--accent-primary)">:${line}</span>` : name;
+          });
+          return `
+              <div style="font-family:var(--font-mono); font-size:12px; padding:8px; background:var(--bg-elevated); border-radius:var(--radius-sm); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                <span style="color:var(--accent-red)">↻</span> ${parts.join(' <span style="color:var(--text-dim)">→</span> ')}
+              </div>
+            `;
+        }).join('')}
+        </div>
+      </div>` : ''}
+
+      ${d.explanation?.length ? `
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Root Cause Analysis</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${d.explanation.map(line => {
+          const isSub = line.startsWith('  ');
+          const color = line.includes('✓') ? 'var(--accent-green)' : (line.includes('warning') || line.includes('moderate') ? 'var(--accent-gold)' : (line.includes('critical') || line.includes('chaos') || line.includes('cycle') ? 'var(--accent-red)' : 'var(--text-secondary)'));
+          return `
+              <div style="font-size:${isSub ? '12px' : '13px'}; color:${color}; ${isSub ? 'padding-left:14px; opacity:0.8;' : 'font-weight:500;'}">
+                ${line.trim()}
+              </div>
+            `;
+        }).join('')}
+        </div>
+      </div>` : ''}
+
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card"><div class="card-title">SHI Gauge</div>${shiGauge(m.shi ?? 0, m.status ?? 'unknown')}</div>
+        <div class="card">
+          <div class="card-title">Fractal Dimension</div>
+          ${fdBar(m.fd ?? 1.0)}
+          <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px;">
+            ${ir('Architecture', fp.architecture_style || '?')}
+            ${ir('Modules', fp.modules || '?')}
+            ${ir('Total Nodes', fp.total_nodes || '?')}
+            ${ir('Avg LOC/mod', fp.avg_module_loc || '?')}
+            ${ir('Entropy', m.graph_entropy?.toFixed(3) || '?')}
+            ${ir('Avg Complexity', m.avg_complexity?.toFixed(2) || '?')}
+          </div>
+        </div>
+      </div>
+      ${(d.action_required || []).length ? `<div class="card"><div class="card-title">⚠ Actions Required</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">${(d.action_required).map(a => `<li style="display:flex;gap:10px;font-size:13px;color:var(--accent-gold)"><span>→</span><span>${a}</span></li>`).join('')}</ul></div>` : ''}`;
+      } catch (e) {
+        res.innerHTML = `<div class="card" style="color:var(--accent-red)">Error: ${e.message}. Is the backend running?</div>`;
+      }
+    }
+    function mc(label, val, sub, color) {
+      return `<div class="metric-card"><div class="metric-label">${label}</div><div class="metric-value" style="color:${color}">${val ?? '—'}</div><div class="metric-sub">${sub}</div></div>`;
+    }
+    function ir(label, val) {
+      return `<div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--text-secondary)">${label}</span><span style="font-family:var(--font-mono)">${val}</span></div>`;
+    }
+
+    // ── Library ────────────────────────────────────────────────────────────
+    function renderLibrary(el) {
+      el.innerHTML = `
+    <div class="page-header"><h1 class="page-title">Elite Architecture Library</h1>
+    <p class="page-subtitle">Gold-standard blueprints — each passing SHI ≥ 0.80</p></div>
+    <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+      <div class="search-wrap" style="flex:1;min-width:220px;">
+        <span class="search-icon">⬡</span>
+        <input id="lib-q" class="search-input" placeholder="Search (stripe, auth, gRPC, RAG, celery…)" />
+      </div>
+      <select id="lib-lang" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 14px;color:var(--text-primary);font-size:13.5px;cursor:pointer;">
+        <option value="">All Languages</option><option value="python">Python</option><option value="typescript">TypeScript</option>
+      </select>
+      <span id="lib-count" style="display:flex;align-items:center;color:var(--text-secondary);font-size:13px;min-width:80px;"></span>
+    </div>
+    <div id="lib-grid" class="module-grid"></div>
+    <div id="lib-detail" style="display:none;"></div>`;
+
+      let deb;
+      const grid = el.querySelector('#lib-grid'), detail = el.querySelector('#lib-detail');
+      const count = el.querySelector('#lib-count');
+
+      async function load(q = '', lang = '') {
+        grid.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading library…</span></div>`;
+        try {
+          const d = await (q || lang ? api('GET', `/api/library/search?q=${encodeURIComponent(q)}${lang ? `&language=${lang}` : ''}`) : api('GET', '/api/library'));
+          const items = d.matches || [];
+          count.textContent = `${items.length} modules`;
+          document.getElementById('lib-badge').textContent = `${items.length} Elite Blueprints`;
+          if (!items.length) { grid.innerHTML = `<div class="empty-state"><div class="empty-icon">⬡</div><div>No results for "${q}"</div></div>`; return; }
+          grid.innerHTML = items.map(modCard).join('');
+          grid.querySelectorAll('.module-card').forEach((c, i) => c.addEventListener('click', () => showDetail(items[i], grid, detail)));
+        } catch (e) { grid.innerHTML = `<div class="card" style="color:var(--accent-red)">Could not load library: ${e.message}</div>`; }
+      }
+      el.querySelector('#lib-q').addEventListener('input', e => { clearTimeout(deb); deb = setTimeout(() => load(e.target.value.trim(), el.querySelector('#lib-lang').value), 300); });
+      el.querySelector('#lib-lang').addEventListener('change', e => load(el.querySelector('#lib-q').value.trim(), e.target.value));
+      load();
+    }
+    function modCard(m) {
+      const shi = (m.shi ?? 0).toFixed(2);
+      const sc = m.shi >= 0.9 ? 'var(--accent-green)' : m.shi >= 0.8 ? 'var(--accent-primary)' : 'var(--accent-gold)';
+      const arch = m.fingerprint?.architecture || '';
+      return `<div class="module-card">
+    <div class="module-card-header"><div class="module-name">${m.name || m.id}</div><div class="module-shi" style="color:${sc};background:${sc}18">${shi}</div></div>
+    <div class="module-desc">${m.description || ''}</div>
+    <div class="module-tags">${arch ? `<span class="tag">${arch}</span>` : ''}<span class="tag">${m.language || 'py'}</span></div>
+  </div>`;
+    }
+    function showDetail(m, grid, detail) {
+      grid.style.display = 'none'; detail.style.display = 'block';
+      const gh = (m.tags || []).find(t => t.startsWith('url:'))?.replace('url:', '');
+      detail.innerHTML = `
+    <button id="bb" class="btn btn-ghost" style="margin-bottom:20px;">← Back</button>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;">
+        <div><h2 style="font-size:18px;font-weight:700;margin-bottom:6px;">${m.name}</h2><p style="font-size:13px;color:var(--text-secondary);">${m.description || ''}</p></div>
+        <div style="text-align:right;flex-shrink:0;"><div style="font-size:28px;font-weight:700;font-family:var(--font-mono);color:var(--accent-green)">${m.shi?.toFixed(3)}</div><div style="font-size:11px;color:var(--text-secondary)">SHI</div></div>
+      </div>
+      <div class="grid-4" style="margin-bottom:20px;">
+        ${dm('FD', m.fd?.toFixed(4))} ${dm('Status', m.status)} ${dm('Language', m.language)} ${dm('Architecture', m.fingerprint?.architecture || '?')}
+      </div>
+      ${gh ? `<a href="${gh}" target="_blank" class="btn btn-ghost">→ View on GitHub</a>` : ''}
+    </div>`;
+      detail.querySelector('#bb').addEventListener('click', () => { detail.style.display = 'none'; grid.style.display = 'grid'; });
+    }
+    function dm(l, v) { return `<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;"><div style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">${l}</div><div style="font-size:15px;font-weight:600;font-family:var(--font-mono)">${v || '?'}</div></div>`; }
+
+    // ── Planner ────────────────────────────────────────────────────────────
+    function renderPlanner(el) {
+      el.innerHTML = `
+    <div class="page-header"><h1 class="page-title">Architecture Planner</h1>
+    <p class="page-subtitle">Describe what you want to build — StructurePulse finds the best matching elite blueprints</p></div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">What do you want to build?</div>
+      <textarea id="problem" class="problem-input" placeholder="e.g. A secure FastAPI backend with Stripe payments and JWT auth…"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="chips"></div>
+        <button id="plan-btn" class="btn btn-primary">✦ Generate Plan</button>
+      </div>
+    </div>
+    <div id="plan-res"></div>`;
+
+      const chips = el.querySelector('#chips');
+      const input = el.querySelector('#problem');
+      EXAMPLES.forEach(ex => {
+        const c = document.createElement('button');
+        c.className = 'btn btn-ghost'; c.style.cssText = 'font-size:11.5px;padding:5px 12px;';
+        c.textContent = ex.split(' ').slice(0, 4).join(' ') + '…'; c.title = ex;
+        c.addEventListener('click', () => { input.value = ex; });
+        chips.appendChild(c);
+      });
+
+      const btn = el.querySelector('#plan-btn');
+      const res = el.querySelector('#plan-res');
+      btn.addEventListener('click', async () => {
+        const p = input.value.trim(); if (!p) { toast('Enter a description', 'warn'); return; }
+        res.innerHTML = `<div class="loading"><div class="spinner"></div><span>Matching against 69 elite blueprints…</span></div>`;
+        btn.disabled = true;
+        try {
+          const d = await api('POST', '/api/plan', { problem: p });
+          const m = d.library_matches || [];
+          res.innerHTML = `
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div class="card"><div class="card-title">Recommendation</div><p style="font-size:13.5px;line-height:1.6;">${d.recommendation || '—'}</p></div>
+          <div class="card"><div class="card-title">Library Matches</div>
+            ${m.length ? m.map(x => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div><div style="font-size:13px;font-weight:500;">${x.name || x.id}</div><div style="font-size:11.5px;color:var(--text-secondary);font-family:var(--font-mono)">${x.id} · ${x.language}</div></div>
+              <div style="font-size:13px;font-weight:700;font-family:var(--font-mono);color:var(--accent-green)">${(x.shi ?? 0).toFixed(2)}</div>
+            </div>`).join('') : '<p style="color:var(--text-secondary);font-size:13px">No direct match — new territory!</p>'}
+          </div>
+        </div>
+        ${d.agent_prompt ? `<div class="card"><div class="card-title">Agent Prompt — Ready for Claude / Cursor</div>
+          <pre class="code-block">${d.agent_prompt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+          <div style="margin-top:12px;"><button id="copy-btn" class="btn btn-ghost" style="font-size:12.5px;">⎘ Copy</button></div></div>`: ''}`;
+          res.querySelector('#copy-btn')?.addEventListener('click', () => { navigator.clipboard.writeText(d.agent_prompt || '').then(() => toast('Copied!')); });
+        } catch (e) { res.innerHTML = `<div class="card" style="color:var(--accent-red)">${e.message}</div>`; }
+        finally { btn.disabled = false; }
+      });
+    }
+
+    // ── Patterns ───────────────────────────────────────────────────────────
+    function renderPatterns(el) {
+      el.innerHTML = `
+    <div class="page-header"><h1 class="page-title">Architecture Patterns</h1>
+    <p class="page-subtitle">Scaffolding templates that enforce structural invariants — guaranteed SHI ≥ 0.8</p></div>
+    <div id="pg" class="grid-2"></div>`;
+
+      const pg = el.querySelector('#pg');
+      pg.innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading patterns…</span></div>`;
+      api('GET', '/api/patterns').then(d => {
+        const ps = d.patterns || [];
+        if (!ps.length) { pg.innerHTML = `<div class="empty-state"><div class="empty-icon">◉</div><div>No patterns found</div></div>`; return; }
+        pg.innerHTML = ps.map(patCard).join('');
+        ps.forEach((p, i) => {
+          pg.querySelectorAll('.inst-btn')[i]?.addEventListener('click', e => { e.stopPropagation(); doInstantiate(p); });
+        });
+      }).catch(e => pg.innerHTML = `<div class="card" style="color:var(--accent-red)">${e.message}</div>`);
+    }
+    const PCOLORS = { 'layered': 'var(--accent-primary)', 'event-driven': 'var(--accent-purple)', 'modular': 'var(--accent-gold)' };
+    function patCard(p) {
+      const c = PCOLORS[p.architecture] || 'var(--accent-primary)';
+      return `<div class="pattern-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+      <div style="font-size:16px;font-weight:700;color:${c}">${p.name}</div>
+      <span class="status-badge" style="background:${c}18;color:${c};border-color:${c}40">${p.architecture}</span>
+    </div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">${p.description}</div>
+    <div style="font-size:10.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Invariants</div>
+    <ul class="invariant-list">${(p.invariants || []).map(i => `<li>${i}</li>`).join('')}</ul>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;">
+      ${Object.keys(p.structure || {}).map(f => `<span style="font-family:var(--font-mono);font-size:11px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:4px;padding:2px 8px;color:var(--text-secondary)">${f}</span>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <div style="font-size:11.5px;color:var(--text-dim);font-family:var(--font-mono)">FD target: ${p.fd_target} · SHI min: ${p.shi_min}</div>
+      <button class="btn btn-primary inst-btn" style="font-size:12px;padding:7px 14px;">⬡ Instantiate</button>
+    </div>
+  </div>`;
+    }
+    async function doInstantiate(p) {
+      toast(`Creating ${p.name} scaffold…`);
+      try {
+        const d = await api('POST', `/api/patterns/${p.id}/instantiate`, {});
+        toast(`✓ Created in ${d.output_dir}`);
+        const note = document.createElement('div');
+        note.style.cssText = 'position:fixed;bottom:80px;right:24px;z-index:9999;background:var(--bg-elevated);border:1px solid var(--border-accent);border-radius:var(--radius-md);padding:20px;max-width:360px;box-shadow:var(--shadow-glow);';
+        note.innerHTML = `<div style="font-size:13px;font-weight:600;color:var(--accent-green);margin-bottom:10px;">✓ ${p.name} instantiated</div>
+      <div style="font-size:12px;color:var(--text-secondary);font-family:var(--font-mono);word-break:break-all;margin-bottom:12px;">${d.output_dir}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">${(d.files || []).map(f => `<span style="font-size:11.5px;font-family:var(--font-mono)">+ ${f}</span>`).join('')}</div>
+      <button style="margin-top:14px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;">dismiss</button>`;
+        document.body.appendChild(note);
+        note.querySelector('button').addEventListener('click', () => note.remove());
+        setTimeout(() => note.remove(), 8000);
+      } catch (e) { toast(e.message, 'error'); }
+    }
+
+    // ── Router ──────────────────────────────────────────────────────────────
+    const VIEWS = { dashboard: renderDashboard, library: renderLibrary, planner: renderPlanner, patterns: renderPatterns };
+    function navigate() {
+      const view = (location.hash.replace('#', '') || 'dashboard');
+      const fn = VIEWS[view] || VIEWS.dashboard;
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+      const c = document.getElementById('view-container');
+      c.innerHTML = ''; fn(c);
+    }
+    document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', e => { e.preventDefault(); location.hash = n.dataset.view; }));
+    window.addEventListener('hashchange', navigate);
+    navigate();
+
+    // ── Prefetch library count ─────────────────────────────────────────────
+    api('GET', '/api/library?limit=1').then(d => document.getElementById('lib-badge').textContent = `${d.count || 69} Elite Blueprints`).catch(() => { });
+  </script>
+</body>
+
+</html>
