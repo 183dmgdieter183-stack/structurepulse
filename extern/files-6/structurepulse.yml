@@ -1,0 +1,124 @@
+# .github/workflows/structurepulse.yml
+#
+# StructurePulse Architecture Gate
+#
+# Runs on every pull request (and main/master push) to enforce
+# structural health invariants before code is merged.
+#
+# Enforcement conditions (edit to match your project's targets):
+#   --fail-on cycles            → block any new dependency cycle
+#   --fail-on "shi<0.65"        → block if structural health index drops below 0.65
+#   --fail-on inconsistencies   → block role-inconsistency architecture smells
+#
+# Exclude paths that inflate noise (tests, migrations, generated code):
+#   --exclude "tests/" "test_*.py" "migrations/"
+#
+# To adjust thresholds, edit the `sp_args` env variable below.
+
+name: StructurePulse Architecture Gate
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+  push:
+    branches: [main, master]
+
+env:
+  # ── Configure your scan here ──────────────────────────────────────────
+  SP_SCAN_PATH: "."                         # path to scan (relative to repo root)
+  SP_EXCLUDE: "tests/ test_*.py migrations/ docs/ .venv/ venv/"
+  SP_FAIL_ON: "cycles shi<0.65 inconsistencies"
+  SP_MIN_PYTHON: "3.11"
+  # ─────────────────────────────────────────────────────────────────────
+
+jobs:
+  architecture-gate:
+    name: Architecture Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.SP_MIN_PYTHON }}
+          cache: pip
+
+      - name: Install StructurePulse
+        run: pip install structurepulse
+
+      # Optional: use local version from repo if pyproject.toml is present
+      # - name: Install StructurePulse (local)
+      #   run: pip install -e .
+
+      - name: Run Architecture Scan
+        id: sp_scan
+        # Build the --fail-on flags and --exclude flags from env vars
+        # The scan exits 0 (pass) or 1 (gate failure) automatically.
+        run: |
+          # Convert space-separated env vars to CLI flags
+          FAIL_FLAGS=$(echo "$SP_FAIL_ON" | xargs -n1 printf '--fail-on %s ')
+          EXCLUDE_FLAGS=$(echo "$SP_EXCLUDE" | xargs -n1 printf '--exclude %s ')
+
+          echo "## StructurePulse Scan" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          structurepulse scan ${{ env.SP_SCAN_PATH }} \
+            $FAIL_FLAGS \
+            $EXCLUDE_FLAGS \
+            --explain \
+            2>&1 | tee /tmp/sp_output.txt
+
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Propagate the exit code from structurepulse
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload JSON Report (on failure)
+        if: failure()
+        run: |
+          structurepulse scan ${{ env.SP_SCAN_PATH }} \
+            --json \
+            $(echo "$SP_FAIL_ON" | xargs -n1 printf '--fail-on %s ') \
+            $(echo "$SP_EXCLUDE" | xargs -n1 printf '--exclude %s ') \
+            > sp_report.json 2>/dev/null || true
+
+      - name: Archive Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: structurepulse-report
+          path: |
+            /tmp/sp_output.txt
+            sp_report.json
+          if-no-files-found: ignore
+          retention-days: 30
+
+# ── Notes ──────────────────────────────────────────────────────────────────────
+#
+# Pre-commit hook alternative (faster, runs locally before push):
+#
+#   structurepulse install-hook --fail-on cycles "shi<0.65" inconsistencies
+#
+# This writes a .git/hooks/pre-commit that blocks the commit if conditions fail.
+#
+# .spignore (project-level ignore file, gitignore-style):
+#
+#   Create .spignore in your repo root to permanently exclude paths:
+#     tests/
+#     docs/
+#     migrations/
+#     !src/        # un-exclude src even if a parent pattern would exclude it
+#
+# Slack/Teams notification on gate failure:
+#
+#   Add a step after the scan:
+#     - name: Notify on failure
+#       if: failure()
+#       uses: 8398a7/action-slack@v3
+#       with:
+#         status: failure
+#         text: "Architecture gate failed. Run `sp scan --explain` locally."

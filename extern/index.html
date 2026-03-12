@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StructurePulse — Code kann lügen. Struktur nicht.</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --void: #060C14;
+  --navy: #0D2040;
+  --navy-2: #112a55;
+  --gold: #C9A84C;
+  --gold-dim: rgba(201,168,76,0.15);
+  --gold-glow: rgba(201,168,76,0.06);
+  --ice: #BDD5EA;
+  --ice-dim: rgba(189,213,234,0.5);
+  --ice-faint: rgba(189,213,234,0.08);
+  --white: #F0F4F8;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--void);
+  color: var(--white);
+  font-family: 'Instrument Sans', sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ── Custom cursor ── */
+.cursor {
+  position: fixed;
+  width: 10px; height: 10px;
+  background: var(--gold);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: transform 0.1s, width 0.2s, height 0.2s, opacity 0.2s;
+  mix-blend-mode: screen;
+}
+.cursor-ring {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: transform 0.18s ease-out, width 0.2s, height 0.2s;
+}
+
+/* ── Noise overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 48px;
+  background: linear-gradient(to bottom, rgba(6,12,20,0.95), transparent);
+  backdrop-filter: blur(2px);
+}
+
+.nav-logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 36px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 13px;
+  color: var(--ice-dim);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--ice); }
+
+.nav-cta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--gold) !important;
+  border: 1px solid rgba(201,168,76,0.3);
+  padding: 8px 16px;
+  border-radius: 2px;
+  transition: background 0.2s, border-color 0.2s !important;
+}
+.nav-cta:hover {
+  background: var(--gold-dim) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+}
+
+/* ── Hero ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 50%, rgba(13,32,64,0.8) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 20% 80%, rgba(201,168,76,0.04) 0%, transparent 60%);
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(189,213,234,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(189,213,234,0.03) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+}
+
+.hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hero-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.hero-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(52px, 7vw, 96px);
+  line-height: 1.0;
+  color: var(--white);
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.9s ease forwards 0.4s;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.hero-tagline {
+  font-size: 18px;
+  font-weight: 300;
+  color: var(--ice-dim);
+  line-height: 1.6;
+  max-width: 520px;
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: fadeUp 0.9s ease forwards 0.6s;
+}
+
+.hero-tagline strong {
+  color: var(--ice);
+  font-weight: 500;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  opacity: 0;
+  animation: fadeUp 0.9s ease forwards 0.8s;
+}
+
+.btn-primary {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: var(--gold);
+  color: var(--void);
+  border: none;
+  padding: 14px 28px;
+  cursor: none;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 0.15s, box-shadow 0.15s;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(201,168,76,0.3);
+}
+
+.btn-secondary {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--ice-dim);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s, gap 0.2s;
+  letter-spacing: 0.04em;
+}
+.btn-secondary:hover { color: var(--ice); gap: 12px; }
+.btn-secondary::after { content: '→'; }
+
+/* ── Terminal demo ── */
+.hero-terminal {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 480px;
+  background: rgba(13,32,64,0.6);
+  border: 1px solid rgba(189,213,234,0.1);
+  border-radius: 4px;
+  backdrop-filter: blur(12px);
+  opacity: 0;
+  animation: fadeLeft 1s ease forwards 1s;
+  z-index: 2;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(189,213,234,0.08);
+}
+.terminal-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.terminal-dot:nth-child(1) { background: #FF5F57; }
+.terminal-dot:nth-child(2) { background: #FEBC2E; }
+.terminal-dot:nth-child(3) { background: #28C840; }
+
+.terminal-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(189,213,234,0.3);
+  margin-left: 8px;
+  letter-spacing: 0.06em;
+}
+
+.terminal-body {
+  padding: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.8;
+}
+
+.t-prompt { color: var(--gold); }
+.t-cmd { color: var(--ice); }
+.t-dim { color: rgba(189,213,234,0.3); }
+.t-label { color: rgba(189,213,234,0.5); }
+.t-ok { color: #4ade80; }
+.t-warn { color: #fbbf24; }
+.t-err { color: #f87171; }
+.t-gold { color: var(--gold); }
+.t-metric { color: var(--ice); }
+
+.terminal-line {
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+}
+
+/* ── Scan animation ── */
+.scan-line { animation: termAppear 0.1s ease forwards; }
+.scan-line:nth-child(1) { animation-delay: 1.4s; }
+.scan-line:nth-child(2) { animation-delay: 1.7s; }
+.scan-line:nth-child(3) { animation-delay: 2.0s; }
+.scan-line:nth-child(4) { animation-delay: 2.2s; }
+.scan-line:nth-child(5) { animation-delay: 2.4s; }
+.scan-line:nth-child(6) { animation-delay: 2.6s; }
+.scan-line:nth-child(7) { animation-delay: 2.75s; }
+.scan-line:nth-child(8) { animation-delay: 2.9s; }
+.scan-line:nth-child(9) { animation-delay: 3.05s; }
+.scan-line:nth-child(10) { animation-delay: 3.2s; }
+.scan-line:nth-child(11) { animation-delay: 3.35s; }
+.scan-line:nth-child(12) { animation-delay: 3.5s; }
+.scan-line:nth-child(13) { animation-delay: 3.65s; }
+.scan-line:nth-child(14) { animation-delay: 3.8s; }
+.scan-line:nth-child(15) { animation-delay: 3.95s; }
+
+/* ── FD visualizer section ── */
+.section-fd {
+  padding: 160px 48px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: var(--gold);
+}
+
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(36px, 4vw, 56px);
+  line-height: 1.1;
+  margin-bottom: 24px;
+  color: var(--white);
+}
+
+.section-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.section-body {
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--ice-dim);
+  line-height: 1.7;
+  max-width: 460px;
+}
+
+.section-body p + p { margin-top: 16px; }
+
+/* ── FD Canvas ── */
+.fd-visual {
+  position: relative;
+}
+
+canvas#fdCanvas {
+  width: 100%;
+  display: block;
+  border-radius: 2px;
+}
+
+.fd-legend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.fd-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(189,213,234,0.5);
+}
+
+.fd-legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+
+/* ── Metrics section ── */
+.section-metrics {
+  padding: 120px 48px;
+  background: linear-gradient(to bottom, transparent, rgba(13,32,64,0.3), transparent);
+}
+
+.metrics-header {
+  text-align: center;
+  margin-bottom: 80px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.metric-card {
+  background: rgba(13,32,64,0.4);
+  border: 1px solid rgba(189,213,234,0.06);
+  padding: 40px 32px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.metric-card:hover {
+  border-color: rgba(201,168,76,0.2);
+  background: rgba(13,32,64,0.7);
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.metric-card:hover::before { opacity: 0.6; }
+
+.metric-symbol {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  font-size: 48px;
+  color: var(--gold);
+  margin-bottom: 16px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.metric-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--ice-dim);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.metric-desc {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(189,213,234,0.45);
+  line-height: 1.6;
+}
+
+.metric-target {
+  margin-top: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+/* ── How it works ── */
+.section-how {
+  padding: 160px 48px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.how-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.how-step {
+  display: flex;
+  gap: 24px;
+  padding: 32px 0;
+  border-bottom: 1px solid rgba(189,213,234,0.06);
+  cursor: none;
+  transition: background 0.2s;
+}
+
+.how-step:last-child { border-bottom: none; }
+
+.step-num {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  font-size: 32px;
+  color: var(--gold);
+  opacity: 0.3;
+  min-width: 36px;
+  line-height: 1;
+  transition: opacity 0.2s;
+}
+.how-step:hover .step-num { opacity: 0.8; }
+
+.step-content h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ice);
+  margin-bottom: 8px;
+  transition: color 0.2s;
+}
+.how-step:hover .step-content h3 { color: var(--white); }
+
+.step-content p {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(189,213,234,0.4);
+  line-height: 1.6;
+}
+
+/* ── Smells section ── */
+.section-smells {
+  padding: 120px 48px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.smells-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  margin-top: 60px;
+}
+
+.smell-card {
+  background: rgba(13,32,64,0.3);
+  border: 1px solid rgba(189,213,234,0.05);
+  padding: 36px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.smell-card:hover { border-color: rgba(201,168,76,0.15); }
+
+.smell-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.smell-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+
+.smell-desc {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(189,213,234,0.4);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.smell-example {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--ice-dim);
+  background: rgba(6,12,20,0.6);
+  border-left: 2px solid rgba(201,168,76,0.3);
+  padding: 10px 14px;
+}
+
+/* ── CI section ── */
+.section-ci {
+  padding: 160px 48px;
+  background: linear-gradient(135deg, rgba(13,32,64,0.5) 0%, transparent 60%);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-ci::before {
+  content: '';
+  position: absolute;
+  top: -200px; right: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(201,168,76,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ci-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.code-block {
+  background: rgba(6,12,20,0.8);
+  border: 1px solid rgba(189,213,234,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(189,213,234,0.06);
+}
+
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(201,168,76,0.6);
+  letter-spacing: 0.1em;
+}
+
+.code-file {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(189,213,234,0.2);
+}
+
+pre {
+  padding: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.8;
+  overflow-x: auto;
+}
+
+.c-comment { color: rgba(189,213,234,0.25); }
+.c-key { color: #7dd3fc; }
+.c-str { color: #86efac; }
+.c-gold { color: var(--gold); }
+.c-dim { color: rgba(189,213,234,0.4); }
+.c-cmd { color: var(--ice); }
+
+/* ── Tagline section ── */
+.section-tagline {
+  padding: 200px 48px;
+  text-align: center;
+  position: relative;
+}
+
+.tagline-big {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(48px, 8vw, 120px);
+  line-height: 1.0;
+  color: var(--white);
+  margin-bottom: 16px;
+}
+
+.tagline-big em {
+  font-style: italic;
+  color: var(--gold);
+  display: block;
+}
+
+.tagline-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: rgba(189,213,234,0.3);
+  letter-spacing: 0.15em;
+  margin-top: 32px;
+  margin-bottom: 60px;
+}
+
+/* ── Install ── */
+.install-bar {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(13,32,64,0.8);
+  border: 1px solid rgba(189,213,234,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.install-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--gold);
+  padding: 14px 20px;
+  border-right: 1px solid rgba(189,213,234,0.1);
+  letter-spacing: 0.1em;
+}
+
+.install-cmd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--ice);
+  padding: 14px 24px;
+}
+
+.install-copy {
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(189,213,234,0.1);
+  color: rgba(189,213,234,0.3);
+  padding: 14px 20px;
+  cursor: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  transition: color 0.2s, background 0.2s;
+}
+.install-copy:hover {
+  color: var(--gold);
+  background: var(--gold-dim);
+}
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid rgba(189,213,234,0.06);
+  padding: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: rgba(189,213,234,0.2);
+  letter-spacing: 0.1em;
+}
+
+.footer-brand span { color: var(--gold); opacity: 0.6; }
+
+.footer-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+
+.footer-links a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(189,213,234,0.25);
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--ice-dim); }
+
+/* ── Divider ── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(189,213,234,0.08), transparent);
+  margin: 0 48px;
+  width: calc(100% - 96px);
+}
+
+/* ── SHI badge ── */
+.shi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(74,222,128,0.08);
+  border: 1px solid rgba(74,222,128,0.2);
+  border-radius: 2px;
+  padding: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #4ade80;
+}
+
+.shi-dot {
+  width: 6px; height: 6px;
+  background: #4ade80;
+  border-radius: 50%;
+  animation: pulse-green 2s ease infinite;
+}
+
+/* ── Keyframes ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeLeft {
+  from { opacity: 0; transform: translateY(-50%) translateX(24px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+@keyframes termAppear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(74,222,128,0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+  color: var(--gold);
+}
+
+/* ── Scroll reveal ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .hero-terminal { display: none; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .section-fd, .how-grid, .ci-inner { grid-template-columns: 1fr; gap: 48px; }
+  .smells-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  nav { padding: 20px 24px; }
+  .nav-links { display: none; }
+  .hero { padding: 100px 24px 60px; }
+  .section-fd, .section-metrics, .section-how,
+  .section-smells, .section-ci, .section-tagline { padding: 80px 24px; }
+  .metrics-grid { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 24px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- ── Nav ── -->
+<nav>
+  <a href="#" class="nav-logo">StructurePulse</a>
+  <ul class="nav-links">
+    <li><a href="#metrics">Metrics</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#ci">CI/CD</a></li>
+    <li><a href="#install" class="nav-cta">pip install</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">Structural Health Monitor</div>
+    <h1 class="hero-title">
+      Code kann lügen.<br><em>Struktur nicht.</em>
+    </h1>
+    <p class="hero-tagline">
+      StructurePulse scans your codebase and tells you whether its architecture
+      is healthy — before it becomes <strong>unmaintainable</strong>.
+      Zero dependencies. Under a second.
+    </p>
+    <div class="hero-actions">
+      <a href="#install" class="btn-primary">pip install structurepulse</a>
+      <a href="https://github.com/fractalsense/structurepulse" class="btn-secondary">View on GitHub</a>
+    </div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="hero-terminal">
+    <div class="terminal-header">
+      <div class="terminal-dot"></div>
+      <div class="terminal-dot"></div>
+      <div class="terminal-dot"></div>
+      <span class="terminal-title">bash — structurepulse</span>
+    </div>
+    <div class="terminal-body">
+      <div class="terminal-line scan-line"><span class="t-prompt">$</span><span class="t-cmd"> sp scan . --explain</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  ────────────────────────────────────</span></div>
+      <div class="terminal-line scan-line"><span class="t-label">  FINGERPRINT</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  languages:  </span><span class="t-metric">python</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  modules:    </span><span class="t-metric">34</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  ────────────────────────────────────</span></div>
+      <div class="terminal-line scan-line"><span class="t-label">  STRUCTURAL HEALTH</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  fd:         </span><span class="t-ok">1.81  [optimal]</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  shi:        </span><span class="t-ok">0.847  HEALTHY ✓</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  coupling:   </span><span class="t-metric">0.009</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  cycles:     </span><span class="t-ok">0</span></div>
+      <div class="terminal-line scan-line"><span class="t-dim">  ────────────────────────────────────</span></div>
+      <div class="terminal-line scan-line"><span class="t-gold">  ✓ Architecture is maintainable</span></div>
+      <div class="terminal-line scan-line"><span class="t-prompt">$</span><span class="cursor-blink">▋</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── FD Section ── -->
+<section class="section-fd">
+  <div class="reveal">
+    <div class="section-label">The Science</div>
+    <h2 class="section-title">Architecture has<br>a <em>measurable signal.</em></h2>
+    <div class="section-body">
+      <p>The Higuchi Fractal Dimension, originally designed for EEG brain signal
+      analysis, detects structural complexity in any time series — including
+      the complexity distribution of a codebase.</p>
+      <p>Applied to code: below <strong style="color:var(--ice)">1.7</strong> means
+      modules are too homogeneous — no specialization, no meaningful architecture.
+      Above <strong style="color:var(--ice)">1.9</strong> means one module dominates
+      and complexity is uncontrolled. The band <strong style="color:var(--gold)">1.7 – 1.9</strong>
+      is where maintainable, well-differentiated systems live.</p>
+      <p>StructurePulse doesn't just measure FD. It combines it with
+      entropy, coupling density, cycle detection, and test topology
+      into a single <strong style="color:var(--ice)">Structural Health Index (SHI)</strong>.</p>
+    </div>
+  </div>
+
+  <div class="fd-visual reveal">
+    <canvas id="fdCanvas" width="600" height="340"></canvas>
+    <div class="fd-legend">
+      <div class="fd-legend-item">
+        <div class="fd-legend-dot" style="background:#f87171"></div>
+        <span>Rigid (FD &lt; 1.7)</span>
+      </div>
+      <div class="fd-legend-item">
+        <div class="fd-legend-dot" style="background:#4ade80"></div>
+        <span>Optimal (1.7 – 1.9)</span>
+      </div>
+      <div class="fd-legend-item">
+        <div class="fd-legend-dot" style="background:#fbbf24"></div>
+        <span>Chaotic (FD &gt; 1.9)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Metrics ── -->
+<section class="section-metrics" id="metrics">
+  <div class="metrics-header reveal">
+    <div class="section-label" style="justify-content:center">What we measure</div>
+    <h2 class="section-title" style="text-align:center">Five signals.<br>One verdict.</h2>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card reveal">
+      <div class="metric-symbol">FD</div>
+      <div class="metric-name">Fractal Dimension</div>
+      <div class="metric-desc">Higuchi complexity of the module complexity series. Measures whether your codebase has meaningful structural differentiation.</div>
+      <div class="metric-target">target: 1.7 – 1.9</div>
+    </div>
+    <div class="metric-card reveal" style="transition-delay:0.1s">
+      <div class="metric-symbol">SHI</div>
+      <div class="metric-name">Structural Health Index</div>
+      <div class="metric-desc">Weighted composite of all five signals. The single number that answers: "Is this codebase maintainable?"</div>
+      <div class="metric-target">target: ≥ 0.80</div>
+    </div>
+    <div class="metric-card reveal" style="transition-delay:0.2s">
+      <div class="metric-symbol">ρ</div>
+      <div class="metric-name">Coupling Density</div>
+      <div class="metric-desc">Import-graph edge density normalized by module count. High coupling means one change propagates everywhere.</div>
+      <div class="metric-target">target: &lt; 0.40</div>
+    </div>
+    <div class="metric-card reveal" style="transition-delay:0.3s">
+      <div class="metric-symbol">∅</div>
+      <div class="metric-name">Dependency Cycles</div>
+      <div class="metric-desc">Circular imports detected via DFS on the dependency graph. Every cycle is a runtime bug waiting to happen — now with exact line numbers.</div>
+      <div class="metric-target">target: 0</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── How it works ── -->
+<section class="section-how" id="how">
+  <div class="how-grid">
+    <div class="reveal">
+      <div class="section-label">Process</div>
+      <h2 class="section-title">How it<br><em>works.</em></h2>
+      <div style="margin-top:32px">
+        <div class="shi-badge">
+          <div class="shi-dot"></div>
+          SHI 0.847 — HEALTHY
+        </div>
+      </div>
+    </div>
+
+    <div class="how-steps reveal">
+      <div class="how-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Parse</h3>
+          <p>AST-based parser extracts nodes, edges, and import lines from Python and TypeScript. Boilerplate files are tagged and excluded from complexity calculations automatically.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Build the graph</h3>
+          <p>Module dependencies become a directed graph. Cycles are detected via depth-first search. Each cycle node is annotated with the exact import line number.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Compute metrics</h3>
+          <p>Higuchi FD is calculated over the complexity series. Coupling density is derived from edge count normalized by module count. Entropy and test topology complete the picture.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Detect smells</h3>
+          <p>Four heuristics cross-reference file names against graph topology — Hidden Hubs, Layer Inversions, Responsibility Leaks, Dead Weight — without any LLM or external API.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h3>Explain</h3>
+          <p>The <code style="font-family:JetBrains Mono,monospace;color:var(--gold);font-size:12px">--explain</code> flag translates every metric deviation into a concrete refactoring suggestion with the exact file and line responsible.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Smells ── -->
+<section class="section-smells">
+  <div class="reveal">
+    <div class="section-label">Role-Inconsistency Detection</div>
+    <h2 class="section-title">The graph never lies.<br><em>Names do.</em></h2>
+    <p style="font-size:16px;font-weight:300;color:var(--ice-dim);line-height:1.7;max-width:600px;margin-top:16px">
+      StructurePulse cross-references what a file is called against how it actually behaves
+      in the dependency graph. No LLM. No heuristics trained on your codebase. Pure topology.
+    </p>
+  </div>
+
+  <div class="smells-grid">
+    <div class="smell-card reveal">
+      <div class="smell-code">H1 — HIDDEN HUB</div>
+      <div class="smell-title">God Object</div>
+      <div class="smell-desc">A file named <code style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--ice-dim)">utils.py</code> or <code style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--ice-dim)">helpers.py</code> that is imported by more than 40% of the codebase — or has coupling above 0.35 — has grown into a hidden core that violates its own name.</div>
+      <div class="smell-example">utils.py → imported by 22/34 modules (65%)</div>
+    </div>
+    <div class="smell-card reveal" style="transition-delay:0.1s">
+      <div class="smell-code">H2 — LAYER INVERSION</div>
+      <div class="smell-title">Broken Architecture</div>
+      <div class="smell-desc">A data or model module that imports from a controller or service module reverses the dependency arrow that clean architecture requires. Almost never intentional.</div>
+      <div class="smell-example">user_model.py → imports user_service.py</div>
+    </div>
+    <div class="smell-card reveal" style="transition-delay:0.1s">
+      <div class="smell-code">H3 — RESPONSIBILITY LEAK</div>
+      <div class="smell-title">Config Calling Logic</div>
+      <div class="smell-desc">A configuration file that imports project-internal business logic has leaked responsibility. Config is data. It should not orchestrate anything.</div>
+      <div class="smell-example">config.py → imports app.py, services.py</div>
+    </div>
+    <div class="smell-card reveal" style="transition-delay:0.2s">
+      <div class="smell-code">H4 — DEAD WEIGHT</div>
+      <div class="smell-title">Anemic Service</div>
+      <div class="smell-desc">A file named <code style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--ice-dim)">*_service.py</code> with defined functions but zero outgoing imports does nothing real. Either it needs a repository to call, or it should be removed.</div>
+      <div class="smell-example">payment_service.py → 3 functions, 0 imports</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── CI/CD ── -->
+<section class="section-ci" id="ci">
+  <div class="ci-inner">
+    <div class="reveal">
+      <div class="section-label">Enforcement</div>
+      <h2 class="section-title">Architecture as<br><em>a gate,</em><br>not an afterthought.</h2>
+      <p style="font-size:16px;font-weight:300;color:var(--ice-dim);line-height:1.7;margin-top:24px;max-width:420px">
+        Drop StructurePulse into any CI pipeline. A PR that introduces a
+        dependency cycle or degrades SHI below your threshold fails the build —
+        before it reaches main.
+      </p>
+      <div style="margin-top:40px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-family:JetBrains Mono,monospace;font-size:13px;display:flex;align-items:center;gap:12px;color:var(--ice-dim)">
+          <span style="color:#4ade80">✓</span> Exit code 0 — architecture healthy
+        </div>
+        <div style="font-family:JetBrains Mono,monospace;font-size:13px;display:flex;align-items:center;gap:12px;color:var(--ice-dim)">
+          <span style="color:#f87171">✗</span> Exit code 1 — condition violated
+        </div>
+        <div style="font-family:JetBrains Mono,monospace;font-size:13px;display:flex;align-items:center;gap:12px;color:var(--ice-dim)">
+          <span style="color:var(--gold)">→</span> Pre-commit hook available
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="transition-delay:0.15s">
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">YAML</span>
+          <span class="code-file">.github/workflows/structurepulse.yml</span>
+        </div>
+        <pre><span class="c-comment"># Architecture Gate — blocks degrading PRs</span>
+<span class="c-key">name:</span> <span class="c-str">Architecture Gate</span>
+<span class="c-key">on:</span> <span class="c-dim">[pull_request]</span>
+
+<span class="c-key">jobs:</span>
+  <span class="c-key">architecture:</span>
+    <span class="c-key">runs-on:</span> <span class="c-str">ubuntu-latest</span>
+    <span class="c-key">steps:</span>
+      <span class="c-dim">- uses: actions/checkout@v4</span>
+      <span class="c-dim">- uses: actions/setup-python@v5</span>
+        <span class="c-key">with:</span> <span class="c-dim">{ python-version: "3.11" }</span>
+
+      <span class="c-dim">- run:</span> <span class="c-str">pip install structurepulse</span>
+
+      <span class="c-dim">- name:</span> <span class="c-str">Scan architecture</span>
+        <span class="c-dim">run:</span> <span class="c-gold">sp scan . \
+          --exclude "tests/" \
+          --fail-on cycles \
+          --fail-on "shi&lt;0.7" \
+          --fail-on inconsistencies</span></pre>
+      </div>
+
+      <div style="margin-top:16px" class="code-block">
+        <div class="code-header">
+          <span class="code-lang">BASH</span>
+          <span class="code-file">pre-commit hook</span>
+        </div>
+        <pre><span class="c-comment"># Install once, enforces on every commit</span>
+<span class="c-cmd">sp install-hook --path .</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── Install ── -->
+<section class="section-tagline" id="install">
+  <div class="tagline-big reveal">
+    Code kann lügen.
+    <em>Struktur nicht.</em>
+  </div>
+
+  <p class="tagline-sub reveal">Zero dependencies. Python 3.11+. Runs in under a second.</p>
+
+  <div class="reveal">
+    <div class="install-bar">
+      <span class="install-label">$</span>
+      <span class="install-cmd" id="installCmd">pip install structurepulse</span>
+      <button class="install-copy" onclick="copyInstall()" title="Copy">copy</button>
+    </div>
+  </div>
+
+  <div style="margin-top:48px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap" class="reveal">
+    <a href="https://github.com/fractalsense/structurepulse" class="btn-secondary">GitHub →</a>
+    <a href="https://github.com/fractalsense/structurepulse/blob/main/QUICKSTART.md" class="btn-secondary">Quickstart →</a>
+    <a href="https://github.com/fractalsense/structurepulse/blob/main/AGENT.md" class="btn-secondary">Agent Docs →</a>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="footer-brand">
+    <span>FractalSense Robotics</span> — StructurePulse v0.3.0 — MIT License
+  </div>
+  <ul class="footer-links">
+    <li><a href="https://github.com/fractalsense/structurepulse">GitHub</a></li>
+    <li><a href="https://github.com/fractalsense/structurepulse/blob/main/README.md">Docs</a></li>
+    <li><a href="https://github.com/fractalsense/structurepulse/blob/main/AGENT.md">Agent API</a></li>
+  </ul>
+</footer>
+
+<script>
+// ── Cursor ──────────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top  = my + 'px';
+});
+
+(function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top  = ry + 'px';
+  requestAnimationFrame(animateRing);
+})();
+
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width  = '18px';
+    cursor.style.height = '18px';
+    cursor.style.opacity = '0.6';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width  = '10px';
+    cursor.style.height = '10px';
+    cursor.style.opacity = '1';
+  });
+});
+
+// ── Scroll reveal ────────────────────────────────────────────
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); }
+  });
+}, { threshold: 0.12 });
+revealEls.forEach(el => io.observe(el));
+
+// ── FD Canvas ────────────────────────────────────────────────
+const canvas = document.getElementById('fdCanvas');
+const ctx    = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+function generateFDData(targetFD, n = 80) {
+  const series = [];
+  let val = 20;
+  const sigma = targetFD < 1.7 ? 2 : targetFD > 1.9 ? 18 : 8;
+  for (let i = 0; i < n; i++) {
+    val += (Math.random() - 0.5) * sigma * 2;
+    val = Math.max(5, Math.min(H - 20, val));
+    series.push(val);
+  }
+  return series;
+}
+
+let datasets = [
+  { fd: 1.4, color: '#f87171', label: 'Rigid',   data: generateFDData(1.4) },
+  { fd: 1.8, color: '#4ade80', label: 'Optimal', data: generateFDData(1.8) },
+  { fd: 2.1, color: '#fbbf24', label: 'Chaotic', data: generateFDData(2.1) },
+];
+
+let activeIdx = 1;
+let animT = 0;
+let phase = 0;
+
+function drawFD(t) {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = 'rgba(13,32,64,0.4)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(189,213,234,0.04)';
+  ctx.lineWidth = 1;
+  for (let y = 40; y < H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  for (let x = 60; x < W; x += 60) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+
+  // Optimal zone
+  const bandH = H * 0.4;
+  const bandY = H * 0.25;
+  const grad = ctx.createLinearGradient(0, bandY, 0, bandY + bandH);
+  grad.addColorStop(0, 'rgba(74,222,128,0.0)');
+  grad.addColorStop(0.5, 'rgba(74,222,128,0.04)');
+  grad.addColorStop(1, 'rgba(74,222,128,0.0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, bandY, W, bandH);
+
+  // Band label
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.fillStyle = 'rgba(74,222,128,0.25)';
+  ctx.fillText('OPTIMAL BAND  1.7 – 1.9', 16, bandY + 16);
+
+  // Draw each series
+  datasets.forEach((ds, i) => {
+    const data = ds.data;
+    const n = data.length;
+    const showN = Math.floor((t / 120) * n);
+    if (showN < 2) return;
+
+    const isActive = i === activeIdx;
+    const alpha = isActive ? 1.0 : 0.2;
+
+    // Area fill
+    if (isActive) {
+      const fillGrad = ctx.createLinearGradient(0, 0, 0, H);
+      fillGrad.addColorStop(0, ds.color + '22');
+      fillGrad.addColorStop(1, ds.color + '00');
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      data.slice(0, showN).forEach((v, j) => {
+        const x = (j / (n - 1)) * W;
+        const y = H - v - 20;
+        j === 0 ? ctx.lineTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.lineTo(((showN - 1) / (n - 1)) * W, H);
+      ctx.closePath();
+      ctx.fillStyle = fillGrad;
+      ctx.fill();
+    }
+
+    // Line
+    ctx.beginPath();
+    ctx.lineWidth = isActive ? 2 : 1;
+    ctx.strokeStyle = ds.color + Math.round(alpha * 255).toString(16).padStart(2, '0');
+    data.slice(0, showN).forEach((v, j) => {
+      const x = (j / (n - 1)) * W;
+      const y = H - v - 20;
+      j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Endpoint dot
+    if (showN > 0) {
+      const lx = ((showN - 1) / (n - 1)) * W;
+      const ly = H - data[showN - 1] - 20;
+      ctx.beginPath();
+      ctx.arc(lx, ly, isActive ? 5 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = ds.color + (isActive ? 'ff' : '44');
+      ctx.fill();
+    }
+  });
+
+  // FD label
+  const ds = datasets[activeIdx];
+  ctx.font = 'italic 14px DM Serif Display, serif';
+  ctx.fillStyle = ds.color;
+  ctx.fillText(`FD = ${ds.fd.toFixed(1)}  —  ${ds.label}`, 16, H - 16);
+}
+
+// Animate
+let lastTime = 0;
+function animate(ts) {
+  const dt = ts - lastTime;
+  lastTime = ts;
+  animT = Math.min(animT + dt * 0.06, 120);
+
+  // Cycle through datasets every 3 seconds
+  phase += dt;
+  if (phase > 3000) {
+    phase = 0;
+    animT = 0;
+    activeIdx = (activeIdx + 1) % 3;
+  }
+
+  drawFD(animT);
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// ── Copy install ─────────────────────────────────────────────
+function copyInstall() {
+  navigator.clipboard.writeText('pip install structurepulse').then(() => {
+    const btn = document.querySelector('.install-copy');
+    btn.textContent = 'copied!';
+    btn.style.color = '#4ade80';
+    setTimeout(() => {
+      btn.textContent = 'copy';
+      btn.style.color = '';
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
